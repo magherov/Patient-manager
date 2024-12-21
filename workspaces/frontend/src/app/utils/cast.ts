@@ -1,0 +1,1 @@
+export const cast = <T>(x: T) => x;

@@ -1,0 +1,54 @@
+<div class="flex flex-col gap-4 p-4 size-full grow">
+  @if ({ patients: patients$ | async }; as resolved) {
+    <header>
+      <h1 class="text-2xl font-medium">Area pazienti</h1>
+    </header>
+
+    <main>
+      @if (resolved.patients; as patients) {
+        <p-table [responsive]="true" [value]="patients">
+          <ng-template pTemplate="header">
+            <tr>
+              <th pSortableColumn="id">
+                ID <p-sortIcon field="id" />
+              </th>
+              <th pSortableColumn="familyName">
+                FamilyName
+                <p-sortIcon field="familyName" />
+              </th>
+              <th pSortableColumn="givenName">
+                GivenName
+                <p-sortIcon field="givenName" />
+              </th>
+              <th class="w-fit">BirthDate</th>
+              <th class="w-fit">Sex</th>
+              <th class="text-nowrap">Numero di parameters</th>
+              <th>Allarme</th>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="body" let-patient>
+            @if (cast(patient); as patient) {
+              <tr class="cursor-pointer" (click)="openDetail(patient)">
+                <td>{{ patient.id }}</td>
+                <td>{{ patient.familyName }}</td>
+                <td>{{ patient.givenName }}</td>
+                <td class="w-fit">{{ patient.birthDate | date : "dd/MM/yyyy" }}</td>
+                <td class="w-fit">{{ patient.sex }}</td>
+                <td class="w-1">{{ patient.parameters.length }}</td>
+                <td>
+                  @if (patient.parameters.at(-1)?.alarm) {
+                    <i class="pi pi-check-circle text-green-500"></i>
+                  } @else {
+                    <i class="pi pi-times-circle text-red-500"></i>
+                  }
+                </td>
+              </tr>
+            }
+          </ng-template>
+        </p-table>
+      } @else {
+        <div class="flex items-center justify-center">caricamento...</div>
+      }
+    </main>
+  }
+</div>
