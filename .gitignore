@@ -1,0 +1,32 @@
+# Frontend (Angular)
+/workspaces/frontend/node_modules/
+/workspaces/frontend/.angular/
+/workspaces/frontend/dist/
+/workspaces/frontend/.env
+/workspaces/frontend/coverage/
+/workspaces/frontend/.npm/
+/workspaces/frontend/.eslintcache
+
+# Backend (.NET)
+/workspaces/backend/**/bin/
+/workspaces/backend/**/obj/
+/workspaces/backend/**/.vs/
+/workspaces/backend/**/Debug/
+/workspaces/backend/**/Release/
+/workspaces/backend/**/*.user
+/workspaces/backend/**/*.dbmdl
+/workspaces/backend/**/*.jfm
+/workspaces/backend/**/appsettings.Development.json
+/workspaces/backend/**/*.db
+/workspaces/backend/**/*.db-shm
+/workspaces/backend/**/*.db-wal
+
+# IDE
+.vs/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+.DS_Store
