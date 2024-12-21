@@ -1,0 +1,46 @@
+# File e cartelle generati durante la build
+# Questi file vengono ricreati localmente e non devono essere condivisi
+[Dd]ebug/
+[Dd]ebugPublic/
+[Rr]elease/
+[Rr]eleases/
+x64/
+x86/
+[Ww][Ii][Nn]32/
+[Aa][Rr][Mm]/
+[Aa][Rr][Mm]64/
+bld/
+# Le cartelle bin e obj contengono file compilati e cache
+# Questi file possono contenere path assoluti specifici del computer
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+
+# File di configurazione di Visual Studio
+# Questi file contengono impostazioni specifiche dell'utente
+.vs/
+*.user
+*.userosscache
+*.sln.docstates
+
+# File di Visual Studio Code
+# Configurazioni specifiche dell'editor
+.vscode/
+*.code-workspace
+
+# File di ReSharper
+# Cache e impostazioni dell'estensione ReSharper
+_ReSharper*/
+*.[Rr]e[Ss]harper
+*.DotSettings.user
+
+# File di NuGet
+# Package e cache di NuGet vengono ricreati localmente
+*.nupkg
+# Pacchetti di simboli NuGet
+*.snupkg
+# Cartella dei pacchetti NuGet
+**/[Pp]ackages/*
+# Eccezione per i file di build di NuGet
+!**/[Pp]ackages/build/

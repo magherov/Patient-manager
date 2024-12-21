@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spiegazione JWT in C#</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        h1, h2, h3 {
+            color: #333;
+        }
+        .section {
+            margin-bottom: 30px;
+        }
+        code {
+            background-color: #f4f4f4;
+            padding: 2px 5px;
+            border-radius: 3px;
+            display: block;
+            white-space: pre-wrap;
+            margin: 10px 0;
+        }
+        .note {
+            background-color: #fff3cd;
+            padding: 10px;
+            border-left: 4px solid #ffeeba;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>Spiegazione JWT (JSON Web Token) in C#</h1>
+
+    <div class="section">
+        <h2>1. Cos'è JWT?</h2>
+        <p>JWT (JSON Web Token) è uno standard aperto (RFC 7519) che definisce un modo compatto e autonomo per trasmettere in modo sicuro informazioni tra le parti come un oggetto JSON. Queste informazioni possono essere verificate e attendibili perché sono firmate digitalmente.</p>
+
+        <h3>1.1. Struttura di un JWT</h3>
+        <p>Un JWT è composto da tre parti, separate da punti (.):</p>
+        <ul>
+            <li><strong>Header</strong>: Contiene il tipo di token e l'algoritmo di firma</li>
+            <li><strong>Payload</strong>: Contiene i claims (informazioni sull'utente)</li>
+            <li><strong>Signature</strong>: Firma per verificare che il messaggio non sia stato alterato</li>
+        </ul>
+
+        <div class="note">
+            <p>Esempio di JWT:</p>
+            <code>eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.
+eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.
+SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c</code>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>2. Pacchetti NuGet Necessari</h2>
+        <p>Per implementare JWT in un'applicazione .NET, sono necessari i seguenti pacchetti:</p>
+
+        <h3>2.1. Pacchetti Principali</h3>
+        <code>dotnet add package Microsoft.AspNetCore.Authentication.JwtBearer --version 9.0.0-preview.1.24081.5
+dotnet add package System.IdentityModel.Tokens.Jwt --version 7.4.0
+dotnet add package Microsoft.IdentityModel.Tokens --version 7.4.0</code>
+
+        <h3>2.2. Funzione dei Pacchetti</h3>
+        <ul>
+            <li><strong>Microsoft.AspNetCore.Authentication.JwtBearer</strong>: Middleware per l'autenticazione JWT in ASP.NET Core</li>
+            <li><strong>System.IdentityModel.Tokens.Jwt</strong>: Libreria per la creazione e validazione dei token JWT</li>
+            <li><strong>Microsoft.IdentityModel.Tokens</strong>: Tipi fondamentali per la gestione della sicurezza e dei token</li>
+        </ul>
+    </div>
+
+    <div class="section">
+        <h2>3. Configurazione JWT in appsettings.json</h2>
+        <p>La configurazione JWT richiede tre parametri principali:</p>
+
+        <code>{
+  "Jwt": {
+    "Key": "Il-Tuo-Secret-Key-Molto-Lungo-E-Sicuro-Almeno-32-Caratteri",
+    "Issuer": "https://localhost:7034",
+    "Audience": "https://localhost:7034"
+  }
+}</code>
+
+        <h3>3.1. Spiegazione dei Parametri</h3>
+        <ul>
+            <li><strong>Key</strong>: Chiave segreta usata per firmare il token (deve essere lunga almeno 32 caratteri)</li>
+            <li><strong>Issuer</strong>: Chi ha emesso il token (tipicamente l'URL del tuo server)</li>
+            <li><strong>Audience</strong>: Per chi è destinato il token (tipicamente l'URL del tuo server o client)</li>
+        </ul>
+
+        <div class="note">
+            <p><strong>Importante:</strong> In produzione, la Key deve essere una stringa casuale e sicura, e non deve mai essere condivisa o committata nel controllo versione.</p>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>4. Configurazione del Servizio JWT</h2>
+        <p>La configurazione del servizio JWT in Program.cs richiede due passaggi:</p>
+
+        <h3>4.1. Aggiunta del Servizio di Autenticazione</h3>
+        <code>builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = builder.Configuration["Jwt:Issuer"],
+            ValidAudience = builder.Configuration["Jwt:Audience"],
+            IssuerSigningKey = new SymmetricSecurityKey(
+                Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
+        };
+    });</code>
+
+        <h3>4.2. Spiegazione dei Parametri di Validazione</h3>
+        <ul>
+            <li><strong>ValidateIssuer</strong>: Verifica che l'emittente del token sia valido</li>
+            <li><strong>ValidateAudience</strong>: Verifica che il destinatario del token sia valido</li>
+            <li><strong>ValidateLifetime</strong>: Verifica che il token non sia scaduto</li>
+            <li><strong>ValidateIssuerSigningKey</strong>: Verifica che la firma del token sia valida</li>
+            <li><strong>IssuerSigningKey</strong>: Chiave utilizzata per verificare la firma del token</li>
+        </ul>
+    </div>
+
+    <div class="section">
+        <h2>5. Generazione del Token JWT</h2>
+        <p>La generazione del token JWT avviene nel servizio di autenticazione:</p>
+
+        <code>public string GenerateJwtToken(User user)
+{
+    var key = new SymmetricSecurityKey(
+        Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]));
+    var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+    var claims = new[]
+    {
+        new Claim(ClaimTypes.Name, user.Username),
+        new Claim(ClaimTypes.Role, user.Role),
+        new Claim(JwtRegisteredClaimNames.Sub, user.ID.ToString()),
+        new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+    };
+
+    var token = new JwtSecurityToken(
+        issuer: _configuration["Jwt:Issuer"],
+        audience: _configuration["Jwt:Audience"],
+        claims: claims,
+        expires: DateTime.UtcNow.AddHours(1),
+        signingCredentials: credentials
+    );
+
+    return new JwtSecurityTokenHandler().WriteToken(token);
+}</code>
+
+        <h3>5.1. Spiegazione dei Claims</h3>
+        <p>I claims sono informazioni sull'utente incluse nel token:</p>
+        <ul>
+            <li><strong>Name</strong>: Nome utente</li>
+            <li><strong>Role</strong>: Ruolo dell'utente (es. "Admin", "User")</li>
+            <li><strong>Sub</strong>: ID univoco dell'utente</li>
+            <li><strong>Jti</strong>: ID univoco del token</li>
+        </ul>
+    </div>
+
+    <div class="section">
+        <h2>6. Protezione delle API con JWT</h2>
+        <p>Per proteggere un endpoint API con JWT, si usa l'attributo [Authorize]:</p>
+
+        <code>[Authorize]
+[ApiController]
+[Route("[controller]")]
+public class SecureController : ControllerBase
+{
+    [HttpGet]
+    public IActionResult Get()
+    {
+        return Ok("Accesso autorizzato!");
+    }
+
+    [Authorize(Roles = "Admin")]
+    [HttpGet("admin")]
+    public IActionResult AdminOnly()
+    {
+        return Ok("Accesso solo per admin!");
+    }
+}</code>
+
+        <h3>6.1. Tipi di Autorizzazione</h3>
+        <ul>
+            <li><strong>[Authorize]</strong>: Richiede solo un token valido</li>
+            <li><strong>[Authorize(Roles = "Admin")]</strong>: Richiede un token valido con ruolo specifico</li>
+            <li><strong>[AllowAnonymous]</strong>: Permette l'accesso senza token</li>
+        </ul>
+    </div>
+
+    <div class="section">
+        <h2>7. Uso del Token nel Client</h2>
+        <p>Il client deve includere il token JWT nell'header Authorization delle richieste HTTP:</p>
+
+        <code>GET /api/secure HTTP/1.1
+Host: localhost:7034
+Authorization: Bearer eyJhbGciOiJIUzI1NiIs...</code>
+
+        <h3>7.1. Esempio in Angular</h3>
+        <code>// Interceptor HTTP
+@Injectable()
+export class JwtInterceptor implements HttpInterceptor {
+    constructor(private authService: AuthService) { }
+
+    intercept(request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
+        const currentUser = this.authService.currentUserValue;
+        if (currentUser && currentUser.token) {
+            request = request.clone({
+                setHeaders: {
+                    Authorization: `Bearer ${currentUser.token}`
+                }
+            });
+        }
+        return next.handle(request);
+    }
+}</code>
+    </div>
+
+    <div class="section">
+        <h2>8. Sicurezza e Best Practices</h2>
+        <ul>
+            <li><strong>Lunghezza della Chiave</strong>: Usa una chiave di almeno 32 caratteri</li>
+            <li><strong>HTTPS</strong>: Usa sempre HTTPS in produzione</li>
+            <li><strong>Scadenza Token</strong>: Imposta una scadenza ragionevole (es. 1 ora)</li>
+            <li><strong>Refresh Token</strong>: Implementa refresh token per sessioni più lunghe</li>
+            <li><strong>Claims</strong>: Includi solo le informazioni necessarie nel token</li>
+            <li><strong>Revoca</strong>: Implementa una blacklist per token revocati se necessario</li>
+        </ul>
+
+        <div class="note">
+            <p><strong>Attenzione:</strong> Non memorizzare informazioni sensibili nei claims del token, poiché il payload del JWT è solo codificato in Base64, non crittografato.</p>
+        </div>
+    </div>
+</body>
+</html> 
