@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spiegazione Dettagliata dell'Applicazione Patient Manager</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            color: #333;
+        }
+        h1, h2, h3 {
+            color: #2c3e50;
+            margin-top: 1.5em;
+        }
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        code {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            border: 1px solid #e9ecef;
+            display: block;
+            white-space: pre-wrap;
+            margin: 10px 0;
+            font-family: 'Consolas', monospace;
+        }
+        .note {
+            background-color: #fff3cd;
+            padding: 15px;
+            border-left: 4px solid #ffc107;
+            margin: 10px 0;
+            border-radius: 0 5px 5px 0;
+        }
+        .concept {
+            background-color: #e3f2fd;
+            padding: 15px;
+            border-left: 4px solid #2196f3;
+            margin: 10px 0;
+            border-radius: 0 5px 5px 0;
+        }
+        ul, ol {
+            padding-left: 20px;
+        }
+        li {
+            margin-bottom: 8px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Patient Manager - Documentazione Dettagliata</h1>
+
+    <div class="section">
+        <h2>1. Panoramica del Progetto</h2>
+        <p>Patient Manager è un'applicazione web API sviluppata in ASP.NET Core per la gestione di pazienti e dei loro parametri medici. L'applicazione implementa un sistema di autenticazione sicuro basato su JWT e offre funzionalità CRUD (Create, Read, Update, Delete) per gestire utenti e pazienti.</p>
+
+        <div class="concept">
+            <h3>Tecnologie Utilizzate</h3>
+            <ul>
+                <li><strong>Framework</strong>: ASP.NET Core 9.0</li>
+                <li><strong>Database</strong>: SQLite</li>
+                <li><strong>ORM</strong>: Entity Framework Core</li>
+                <li><strong>Autenticazione</strong>: JWT (JSON Web Tokens)</li>
+                <li><strong>Documentazione API</strong>: Swagger/OpenAPI</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>2. Struttura del Progetto</h2>
+        <p>Il progetto è organizzato in diverse cartelle, ognuna con uno scopo specifico:</p>
+
+        <ul>
+            <li><strong>Controllers/</strong>: Contiene i controller che gestiscono le richieste HTTP</li>
+            <li><strong>Models/</strong>: Definisce le entità e i DTO (Data Transfer Objects)</li>
+            <li><strong>Services/</strong>: Contiene la logica di business e i servizi</li>
+            <li><strong>Data/</strong>: Gestisce il contesto del database e le migrazioni</li>
+        </ul>
+    </div>
+
+    <div class="section">
+        <h2>3. Modelli (Models)</h2>
+
+        <h3>3.1. User.cs</h3>
+        <code>public class User
+{
+    public int ID { get; set; }
+    public string Username { get; set; } = "";
+    public string PasswordHash { get; set; } = "";
+    public string PasswordSalt { get; set; } = "";
+    public string Role { get; set; } = "User";
+}</code>
+        <p>La classe <code>User</code> rappresenta un utente del sistema:</p>
+        <ul>
+            <li><strong>ID</strong>: Identificatore univoco dell'utente</li>
+            <li><strong>Username</strong>: Nome utente univoco per il login</li>
+            <li><strong>PasswordHash</strong>: Hash della password per la sicurezza</li>
+            <li><strong>PasswordSalt</strong>: Salt utilizzato per l'hashing della password</li>
+            <li><strong>Role</strong>: Ruolo dell'utente (Admin o User)</li>
+        </ul>
+
+        <h3>3.2. Patient.cs</h3>
+        <code>public class Patient
+{
+    public int ID { get; set; }
+    public string FamilyName { get; set; } = "";
+    public string GivenName { get; set; } = "";
+    public DateTime BirthDate { get; set; }
+    public string Sex { get; set; } = "";
+    public ICollection<Parameter> Parameters { get; set; } = new List<Parameter>();
+}</code>
+        <p>La classe <code>Patient</code> rappresenta un paziente nel sistema:</p>
+        <ul>
+            <li><strong>ID</strong>: Identificatore univoco del paziente</li>
+            <li><strong>FamilyName</strong>: Cognome del paziente</li>
+            <li><strong>GivenName</strong>: Nome del paziente</li>
+            <li><strong>BirthDate</strong>: Data di nascita</li>
+            <li><strong>Sex</strong>: Sesso del paziente</li>
+            <li><strong>Parameters</strong>: Collezione di parametri associati al paziente</li>
+        </ul>
+
+        <h3>3.3. Parameter.cs</h3>
+        <code>public class Parameter
+{
+    public int ID { get; set; }
+    public string Name { get; set; } = "";
+    public string Value { get; set; } = "";
+    public bool Alarm { get; set; }
+    public int PatientID { get; set; }
+}</code>
+        <p>La classe <code>Parameter</code> rappresenta un parametro medico:</p>
+        <ul>
+            <li><strong>ID</strong>: Identificatore univoco del parametro</li>
+            <li><strong>Name</strong>: Nome del parametro (es. "Pressione", "Temperatura")</li>
+            <li><strong>Value</strong>: Valore del parametro</li>
+            <li><strong>Alarm</strong>: Indica se il parametro è in stato di allarme</li>
+            <li><strong>PatientID</strong>: ID del paziente associato (chiave esterna)</li>
+        </ul>
+    </div>
+
+    <div class="section">
+        <h2>4. Data Transfer Objects (DTOs)</h2>
+        
+        <h3>4.1. LoginRequest.cs</h3>
+        <code>public class LoginRequest
+{
+    public string Username { get; set; } = "";
+    public string Password { get; set; } = "";
+}</code>
+        <p>DTO utilizzato per le richieste di login</p>
+
+        <h3>4.2. LoginResponse.cs</h3>
+        <code>public class LoginResponse
+{
+    public string Token { get; set; } = "";
+    public string Username { get; set; } = "";
+    public string Role { get; set; } = "";
+    public DateTime Expiration { get; set; }
+}</code>
+        <p>DTO utilizzato per le risposte di login, contiene il token JWT</p>
+
+        <h3>4.3. CreateUserRequest.cs</h3>
+        <code>public class CreateUserRequest
+{
+    public string Username { get; set; } = "";
+    public string Password { get; set; } = "";
+    public string Role { get; set; } = "User";
+}</code>
+        <p>DTO utilizzato per la creazione di nuovi utenti</p>
+    </div>
+
+    <div class="section">
+        <h2>5. Database Context</h2>
+        
+        <h3>5.1. ApplicationDbContext.cs</h3>
+        <code>public class ApplicationDbContext : DbContext
+{
+    public DbSet<User> Users { get; set; } = null!;
+    public DbSet<Patient> Patients { get; set; } = null!;
+    public DbSet<Parameter> Parameters { get; set; } = null!;
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        base.OnModelCreating(modelBuilder);
+
+        modelBuilder.Entity<User>()
+            .HasIndex(u => u.Username)
+            .IsUnique();
+
+        modelBuilder.Entity<Patient>()
+            .HasMany(p => p.Parameters)
+            .WithOne()
+            .HasForeignKey(p => p.PatientID)
+            .OnDelete(DeleteBehavior.Cascade);
+    }
+}</code>
+        <p>Il context del database gestisce:</p>
+        <ul>
+            <li>Definizione delle tabelle tramite DbSet</li>
+            <li>Configurazione delle relazioni tra entità</li>
+            <li>Vincoli di unicità (es. username)</li>
+            <li>Comportamento di eliminazione a cascata</li>
+        </ul>
+    </div>
+
+    <div class="section">
+        <h2>6. Servizi</h2>
+
+        <h3>6.1. IAuthService.cs</h3>
+        <code>public interface IAuthService
+{
+    Task<LoginResponse> LoginAsync(LoginRequest request);
+    string GenerateJwtToken(User user);
+    string HashPassword(string password, out string salt);
+    bool VerifyPassword(string password, string hash, string salt);
+}</code>
+        <p>Interfaccia che definisce i metodi per l'autenticazione</p>
+
+        <h3>6.2. AuthService.cs</h3>
+        <p>Implementazione del servizio di autenticazione che gestisce:</p>
+        <ul>
+            <li>Login degli utenti</li>
+            <li>Generazione dei token JWT</li>
+            <li>Hashing e verifica delle password</li>
+        </ul>
+    </div>
+
+    <div class="section">
+        <h2>7. Controllers</h2>
+
+        <h3>7.1. AuthController.cs</h3>
+        <code>[ApiController]
+[Route("api/[controller]")]
+public class AuthController : ControllerBase
+{
+    [HttpPost("login")]
+    public async Task<ActionResult<LoginResponse>> Login([FromBody] LoginRequest request)
+    {
+        // Implementazione del login
+    }
+}</code>
+        <p>Gestisce l'autenticazione degli utenti</p>
+
+        <h3>7.2. UserController.cs</h3>
+        <p>Controller per la gestione degli utenti con operazioni CRUD:</p>
+        <ul>
+            <li><code>GET /User</code>: Lista tutti gli utenti</li>
+            <li><code>GET /User/{id}</code>: Ottiene un utente specifico</li>
+            <li><code>POST /User</code>: Crea un nuovo utente</li>
+            <li><code>PUT /User/{id}</code>: Aggiorna un utente</li>
+            <li><code>DELETE /User/{id}</code>: Elimina un utente</li>
+        </ul>
+
+        <h3>7.3. TestController.cs</h3>
+        <p>Controller per la generazione di dati di test:</p>
+        <ul>
+            <li>Crea un utente admin di default</li>
+            <li>Genera pazienti e parametri di esempio</li>
+            <li>Utile per il testing e lo sviluppo</li>
+        </ul>
+    </div>
+
+    <div class="section">
+        <h2>8. Configurazione dell'Applicazione</h2>
+
+        <h3>8.1. Program.cs</h3>
+        <p>File principale di configurazione che:</p>
+        <ul>
+            <li>Configura i servizi dell'applicazione</li>
+            <li>Imposta il database SQLite</li>
+            <li>Configura l'autenticazione JWT</li>
+            <li>Abilita CORS per il frontend</li>
+            <li>Configura Swagger per la documentazione API</li>
+        </ul>
+
+        <h3>8.2. appsettings.json</h3>
+        <code>{
+  "ConnectionStrings": {
+    "DefaultConnection": "Data Source=PatientManager.db"
+  },
+  "Jwt": {
+    "Key": "Il-Tuo-Secret-Key-Molto-Lungo-E-Sicuro-Almeno-32-Caratteri",
+    "Issuer": "https://localhost:7034",
+    "Audience": "https://localhost:7034"
+  }
+}</code>
+        <p>File di configurazione che contiene:</p>
+        <ul>
+            <li>Stringa di connessione al database</li>
+            <li>Configurazione JWT</li>
+            <li>Altre impostazioni dell'applicazione</li>
+        </ul>
+    </div>
+
+    <div class="section">
+        <h2>9. Sicurezza</h2>
+        <div class="note">
+            <h3>Misure di Sicurezza Implementate</h3>
+            <ul>
+                <li>Autenticazione basata su JWT</li>
+                <li>Password hashate con salt</li>
+                <li>Autorizzazione basata su ruoli</li>
+                <li>Validazione degli input</li>
+                <li>Protezione contro SQL injection (tramite EF Core)</li>
+                <li>CORS configurato per il frontend</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>10. Utilizzo dell'Applicazione</h2>
+        <p>Per utilizzare l'applicazione:</p>
+        <ol>
+            <li>Avviare l'applicazione con <code>dotnet run</code></li>
+            <li>Accedere a Swagger UI per testare le API</li>
+            <li>Utilizzare il TestController per generare dati iniziali</li>
+            <li>Effettuare il login con le credenziali admin</li>
+            <li>Utilizzare il token JWT ricevuto per le chiamate autenticate</li>
+        </ol>
+    </div>
+</body>
+</html> 

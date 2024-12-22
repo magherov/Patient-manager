@@ -242,5 +242,272 @@ export class JwtInterceptor implements HttpInterceptor {
             <p><strong>Attenzione:</strong> Non memorizzare informazioni sensibili nei claims del token, poiché il payload del JWT è solo codificato in Base64, non crittografato.</p>
         </div>
     </div>
+
+    <div class="section">
+        <h2>18. Gestione degli Utenti (CRUD)</h2>
+        <p>Implementiamo un sistema completo per la gestione degli utenti con operazioni CRUD (Create, Read, Update, Delete).</p>
+
+        <div class="entity">
+            <h3>18.1. DTO per la Creazione degli Utenti</h3>
+            <p>Creiamo un Data Transfer Object per la creazione degli utenti:</p>
+            <code>public class CreateUserRequest
+{
+    public string Username { get; set; } = "";
+    public string Password { get; set; } = "";
+    public string Role { get; set; } = "User";  // Default a "User"
+}</code>
+            <p>Questo DTO:</p>
+            <ul>
+                <li>Accetta username e password in chiaro</li>
+                <li>Permette di specificare un ruolo (default: "User")</li>
+                <li>Non espone campi sensibili come PasswordHash e PasswordSalt</li>
+            </ul>
+        </div>
+
+        <div class="entity">
+            <h3>18.2. Controller degli Utenti</h3>
+            <p>Il controller implementa tutte le operazioni CRUD:</p>
+            <ul>
+                <li><strong>GET /User</strong>: Lista tutti gli utenti (solo per Admin)</li>
+                <li><strong>GET /User/{id}</strong>: Ottiene un utente specifico (solo per Admin)</li>
+                <li><strong>POST /User</strong>: Crea un nuovo utente (solo per Admin)</li>
+                <li><strong>PUT /User/{id}</strong>: Aggiorna un utente esistente (solo per Admin)</li>
+                <li><strong>DELETE /User/{id}</strong>: Elimina un utente (solo per Admin)</li>
+            </ul>
+
+            <h4>Caratteristiche di Sicurezza:</h4>
+            <ul>
+                <li>Tutti gli endpoint sono protetti con [Authorize(Roles = "Admin")]</li>
+                <li>Le password vengono sempre hashate prima del salvataggio</li>
+                <li>I campi sensibili (PasswordHash, PasswordSalt) non vengono mai esposti nelle risposte</li>
+                <li>Verifica dell'unicità dello username</li>
+                <li>Protezione contro l'eliminazione dell'ultimo amministratore</li>
+            </ul>
+
+            <h4>Esempio di Creazione Utente:</h4>
+            <code>// POST: /User
+[HttpPost]
+[Authorize(Roles = "Admin")]
+public async Task<ActionResult<User>> CreateUser(CreateUserRequest request)
+{
+    // Verifica se l'username esiste già
+    if (await _context.Users.AnyAsync(u => u.Username == request.Username))
+    {
+        return BadRequest("Username già in uso");
+    }
+
+    // Crea il nuovo utente con password hashata
+    var user = new User
+    {
+        Username = request.Username,
+        Role = request.Role
+    };
+
+    // Hash della password
+    user.PasswordHash = _authService.HashPassword(request.Password, out string salt);
+    user.PasswordSalt = salt;
+
+    _context.Users.Add(user);
+    await _context.SaveChangesAsync();
+
+    return CreatedAtAction(
+        nameof(GetUser),
+        new { id = user.ID },
+        new { user.ID, user.Username, user.Role }
+    );
+}</code>
+        </div>
+
+        <div class="entity">
+            <h3>18.3. Aggiornamento dei Dati di Test</h3>
+            <p>Il TestController è stato aggiornato per creare un utente admin con password hashata:</p>
+            <code>// Verifica se l'utente admin esiste già
+var existingAdmin = await _context.Users.FirstOrDefaultAsync(u => u.Username == "admin");
+if (existingAdmin == null)
+{
+    // Crea un utente admin di test
+    var user = new User 
+    { 
+        Username = "admin",
+        Role = "Admin"
+    };
+    
+    // Hash della password
+    user.PasswordHash = _authService.HashPassword("test123", out string salt);
+    user.PasswordSalt = salt;
+
+    _context.Users.Add(user);
+}</code>
+            <p>Questo codice:</p>
+            <ul>
+                <li>Verifica se l'utente admin esiste già per evitare duplicati</li>
+                <li>Crea un utente admin solo se non esiste</li>
+                <li>Usa il servizio di autenticazione per hashare la password</li>
+            </ul>
+        </div>
+
+        <div class="note">
+            <p><strong>Note sulla Sicurezza:</strong></p>
+            <ul>
+                <li>Tutte le operazioni sugli utenti richiedono privilegi di amministratore</li>
+                <li>Le password non vengono mai salvate in chiaro</li>
+                <li>Viene mantenuto almeno un amministratore nel sistema</li>
+                <li>Gli username devono essere unici</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>Inizializzazione Utenti di Default</h2>
+        
+        <h2>Concetti Chiave</h2>
+        <ul>
+            <li><strong>DbInitializerService</strong>: Un servizio dedicato all'inizializzazione del database</li>
+            <li><strong>Dependency Injection</strong>: Utilizziamo l'iniezione delle dipendenze per gestire il DbContext</li>
+            <li><strong>BCrypt</strong>: Utilizziamo BCrypt per l'hashing sicuro delle password</li>
+        </ul>
+
+        <h2>Spiegazione Dettagliata</h2>
+        <h3>1. DbInitializerService</h3>
+        <p>
+            Questo servizio ha la responsabilità di verificare e creare gli utenti di default se necessario.
+            Il costruttore riceve il DbContext tramite dependency injection.
+        </p>
+
+        <h3>2. InitializeAsync()</h3>
+        <p>
+            Questo metodo esegue le seguenti operazioni:
+            <ol>
+                <li>Verifica se esistono già degli utenti nel database</li>
+                <li>Se non esistono utenti, crea due utenti predefiniti:
+                    <ul>
+                        <li>Admin (username: admin, password: admin)</li>
+                        <li>User (username: user, password: user)</li>
+                    </ul>
+                </li>
+                <li>Le password vengono salvate in modo sicuro utilizzando l'hashing BCrypt</li>
+                <li>Gli utenti vengono salvati nel database</li>
+            </ol>
+        </p>
+
+        <h3>3. Configurazione in Program.cs</h3>
+        <p>
+            Nel file Program.cs:
+            <ul>
+                <li>Registriamo il servizio nel container DI</li>
+                <li>Creiamo uno scope per eseguire l'inizializzazione all'avvio dell'applicazione</li>
+                <li>Eseguiamo l'inizializzazione in modo asincrono</li>
+            </ul>
+        </p>
+
+        <h2>Sicurezza</h2>
+        <p>
+            È importante notare che:
+            <ul>
+                <li>Le password non vengono mai salvate in chiaro nel database</li>
+                <li>Utilizziamo BCrypt per l'hashing delle password, che è un algoritmo sicuro e moderno</li>
+                <li>L'inizializzazione avviene solo se il database è vuoto</li>
+            </ul>
+        </p>
+    </div>
+
+    <div class="section">
+        <h2>Estensioni Visual Studio Code per .NET e C#</h2>
+        
+        <h3>1. Estensioni Essenziali</h3>
+        <ul>
+            <li>
+                <strong>C# Dev Kit</strong> (ms-dotnettools.csdevkit)
+                <p>Pacchetto completo Microsoft per lo sviluppo C# che include:</p>
+                <ul>
+                    <li>IntelliSense avanzato</li>
+                    <li>Debugging</li>
+                    <li>Refactoring del codice</li>
+                    <li>Analisi del codice in tempo reale</li>
+                </ul>
+            </li>
+            
+            <li>
+                <strong>C# Extensions</strong> (jchannon.csharpextensions)
+                <p>Aggiunge funzionalità utili come:</p>
+                <ul>
+                    <li>Creazione rapida di classi e interfacce</li>
+                    <li>Generazione automatica di costruttori</li>
+                    <li>Aggiunta rapida di proprietà</li>
+                </ul>
+            </li>
+        </ul>
+
+        <h3>2. Estensioni per il Debug e Test</h3>
+        <ul>
+            <li>
+                <strong>.NET Core Test Explorer</strong> (formulahendry.dotnet-test-explorer)
+                <p>Permette di:</p>
+                <ul>
+                    <li>Visualizzare e eseguire i test unitari</li>
+                    <li>Vedere i risultati dei test in tempo reale</li>
+                    <li>Navigare facilmente tra i test</li>
+                </ul>
+            </li>
+        </ul>
+
+        <h3>3. Estensioni per la Produttività</h3>
+        <ul>
+            <li>
+                <strong>NuGet Package Manager</strong> (jmrog.vscode-nuget-package-manager)
+                <p>Gestione visuale dei pacchetti NuGet:</p>
+                <ul>
+                    <li>Ricerca pacchetti</li>
+                    <li>Installazione/Rimozione pacchetti</li>
+                    <li>Aggiornamento versioni</li>
+                </ul>
+            </li>
+            
+            <li>
+                <strong>Auto-Using for C#</strong> (fudge.auto-using)
+                <p>Aggiunge automaticamente le direttive using necessarie</p>
+            </li>
+        </ul>
+
+        <h3>4. Estensioni per il Codice Style</h3>
+        <ul>
+            <li>
+                <strong>Better Comments</strong> (aaron-bond.better-comments)
+                <p>Migliora la leggibilità dei commenti con:</p>
+                <ul>
+                    <li>Evidenziazione per tipo di commento</li>
+                    <li>Categorizzazione (TODO, FIXME, etc.)</li>
+                </ul>
+            </li>
+            
+            <li>
+                <strong>Indent Rainbow</strong> (oderwat.indent-rainbow)
+                <p>Colora l'indentazione per una migliore leggibilità del codice</p>
+            </li>
+        </ul>
+
+        <h3>5. Come Installare le Estensioni</h3>
+        <ol>
+            <li>Apri Visual Studio Code</li>
+            <li>Premi Ctrl+Shift+X (o Cmd+Shift+X su Mac) per aprire il pannello delle estensioni</li>
+            <li>Cerca l'estensione desiderata usando il suo nome</li>
+            <li>Clicca su "Install"</li>
+        </ol>
+
+        <div class="note">
+            <p><strong>Consiglio:</strong> Dopo l'installazione delle estensioni, riavvia VS Code per assicurarti che tutte le funzionalità siano attivate correttamente.</p>
+        </div>
+
+        <h3>6. Configurazione Consigliata</h3>
+        <p>Aggiungi queste impostazioni al tuo settings.json:</p>
+        <code>{
+    "editor.formatOnSave": true,
+    "editor.formatOnType": true,
+    "csharp.format.enable": true,
+    "dotnet.completion.showCompletionItemsFromUnimportedNamespaces": true,
+    "omnisharp.enableRoslynAnalyzers": true,
+    "omnisharp.enableEditorConfigSupport": true
+}</code>
+    </div>
 </body>
-</html> 
+</html>

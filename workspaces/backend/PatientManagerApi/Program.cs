@@ -34,6 +34,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
 // Registrazione dei servizi
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<DbInitializerService>();
 
 // Configurazione CORS per Angular
 builder.Services.AddCors(options =>
@@ -67,6 +68,12 @@ app.UseCors("AllowAngular");
 // Aggiunge l'autenticazione alla pipeline
 app.UseAuthentication();
 app.UseAuthorization();
+
+using (var scope = app.Services.CreateScope())
+{
+    var initializer = scope.ServiceProvider.GetRequiredService<DbInitializerService>();
+    await initializer.InitializeAsync();
+}
 
 app.MapControllers();
 

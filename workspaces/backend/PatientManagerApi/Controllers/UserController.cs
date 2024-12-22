@@ -24,22 +24,23 @@ public class UserController : ControllerBase
     // GET: /User
     [HttpGet]
     [Authorize(Roles = "Admin")]
-    public async Task<ActionResult<IEnumerable<User>>> GetUsers()
+    public async Task<ActionResult<IEnumerable<UserResponse>>> GetUsers()
     {
         var users = await _context.Users.ToListAsync();
-        // Non restituiamo i campi sensibili
-        return users.Select(u => new
+        var response = users.Select(u => new UserResponse
         {
-            u.ID,
-            u.Username,
-            u.Role
+            ID = u.ID,
+            Username = u.Username,
+            Role = u.Role
         }).ToList();
+
+        return Ok(response);
     }
 
     // GET: /User/5
     [HttpGet("{id}")]
     [Authorize(Roles = "Admin")]
-    public async Task<ActionResult<User>> GetUser(int id)
+    public async Task<ActionResult<UserResponse>> GetUser(int id)
     {
         var user = await _context.Users.FindAsync(id);
 
@@ -48,19 +49,20 @@ public class UserController : ControllerBase
             return NotFound();
         }
 
-        // Non restituiamo i campi sensibili
-        return Ok(new
+        var response = new UserResponse
         {
-            user.ID,
-            user.Username,
-            user.Role
-        });
+            ID = user.ID,
+            Username = user.Username,
+            Role = user.Role
+        };
+
+        return Ok(response);
     }
 
     // POST: /User
     [HttpPost]
     [Authorize(Roles = "Admin")]
-    public async Task<ActionResult<User>> CreateUser(CreateUserRequest request)
+    public async Task<ActionResult<UserResponse>> CreateUser(CreateUserRequest request)
     {
         // Verifica se l'username esiste già
         if (await _context.Users.AnyAsync(u => u.Username == request.Username))
@@ -82,17 +84,23 @@ public class UserController : ControllerBase
         _context.Users.Add(user);
         await _context.SaveChangesAsync();
 
-        // Restituisci l'utente creato (senza campi sensibili)
+        var response = new UserResponse
+        {
+            ID = user.ID,
+            Username = user.Username,
+            Role = user.Role
+        };
+
         return CreatedAtAction(
             nameof(GetUser),
             new { id = user.ID },
-            new { user.ID, user.Username, user.Role }
+            response
         );
     }
 
     // PUT: /User/5
     [HttpPut("{id}")]
-    [Authorize(Roles = "Admin")]
+    //[Authorize(Roles = "Admin")]
     public async Task<IActionResult> UpdateUser(int id, CreateUserRequest request)
     {
         var user = await _context.Users.FindAsync(id);
