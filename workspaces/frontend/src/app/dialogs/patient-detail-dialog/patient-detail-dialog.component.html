@@ -1,6 +1,10 @@
 <div class="dialog-container">
   <header>
-    <h3>Dettaglio del Paziente "{{ patient.givenName }}"</h3>
+    @if (data.action === 'create') {
+      <h3>Aggiungi un paziente</h3>
+    } @else {
+      <h3>Dettaglio del Paziente {{ data.patient?.givenName }} {{ data.patient?.familyName }}</h3>
+    }
   </header>
 
   <main>
@@ -8,41 +12,102 @@
       <ng-container
         [ngTemplateOutlet]="field"
         [ngTemplateOutletContext]="{
-          $implicit: { label: 'FamilyName', control: form.controls.familyName }
+          $implicit: { label: 'Cognome', control: form.controls.familyName }
         }">
       </ng-container>
 
       <ng-container
         [ngTemplateOutlet]="field"
         [ngTemplateOutletContext]="{
-          $implicit: { label: 'GivenName', control: form.controls.givenName }
+          $implicit: { label: 'Nome', control: form.controls.givenName }
         }">
       </ng-container>
 
       <ng-container
         [ngTemplateOutlet]="field"
         [ngTemplateOutletContext]="{
-          $implicit: { label: 'Sex', control: form.controls.sex }
+          $implicit: { label: 'Sesso', control: form.controls.sex }
         }">
       </ng-container>
 
-      <p-table [responsive]="true" [value]="patient.parameters">
+      <div class="flex flex-col gap-1">
+        <label>Data di nascita</label>
+        <p-calendar
+          class="w-full"
+          dateFormat="dd/mm/yy"
+          styleClass="w-full"
+          appendTo="body"
+          iconDisplay="input"
+          [formControl]="form.controls.birthDate"
+          [showIcon]="true">
+        </p-calendar>
+      </div>
+      
+      <p-table 
+        [responsive]="true" 
+        [value]="form.controls.parameters.controls">
         <ng-template pTemplate="header">
           <tr>
             <th>ID</th>
-            <th>Name</th>
-            <th>Value</th>
-            <th class="w-fit">Alarm</th>
+            <th>Nome</th>
+            <th>Valore</th>
+            <th class="w-fit">Allarme</th>
+            <th></th>
           </tr>
         </ng-template>
-        <ng-template pTemplate="body" let-parameter>
+        <ng-template 
+          pTemplate="body"
+          let-index="rowIndex"
+          let-parameter>
           @if (castParameter(parameter); as parameter) {
           <tr>
-            <td>{{ parameter.id }}</td>
-            <td>{{ parameter.name }}</td>
-            <td>{{ parameter.value }}</td>
-            <td>{{ parameter.alarm }}</td>
+            <td>
+              <input 
+                type="number"
+                pInputText
+                [formControl]="parameter.controls.id" />
+            </td>
+            <td>
+              <input 
+                type="text"
+                pInputText
+                [formControl]="parameter.controls.name" />
+            </td>
+            <td> 
+              <input 
+                type="text"
+                pInputText
+                [formControl]="parameter.controls.value" />
+            </td>
+            <td>
+              <p-checkbox 
+                [binary]="true"
+                [formControl]="parameter.controls.alarm">
+              </p-checkbox>
+            </td>
+            <td>
+              @if (data.action === 'create') {
+                <button 
+                  class="btn-icon"
+                  (click)="$event.stopPropagation(); removeParameter(index, parameter)">
+                  <i class="text-red-500 pi pi-trash"></i>
+                </button>
+              }
+            </td>
           </tr>
+          }
+        </ng-template>
+
+        <ng-template pTemplate="footer">
+          @if (data.action === 'create') {
+            <div class="flex items-center h-10 w-full">
+              <button 
+                class="flex grow w-full items-center gap-1"
+                (click)="addParameter()">
+                <span class="font-medium">Aggiungi</span>
+                <i class="pi pi-plus"></i>
+              </button>
+            </div>
           }
         </ng-template>
       </p-table>
@@ -70,7 +135,9 @@
   </footer>
 </div>
 
-<ng-template #field let-patient>
+<ng-template 
+  #field 
+  let-patient>
   @if (cast(patient); as patint) {
   <div class="flex flex-col gap-1">
     <label>{{ patient.label }}</label>

@@ -1,3 +1,4 @@
 export const enviroment = {
-  apiBasePath: 'https://mobile.digistat.it/CandidateApi',
+  basePath: 'http://localhost:5034',
+  apiBasePath: 'http://localhost:5034/api',
 } as const;

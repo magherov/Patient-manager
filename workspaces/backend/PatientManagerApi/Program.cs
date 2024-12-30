@@ -4,12 +4,19 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using PatientManagerApi.Data;
 using PatientManagerApi.Services;
+using PatientManagerApi.Hubs;
 
 // Questo è il punto di ingresso dell'applicazione
 var builder = WebApplication.CreateBuilder(args);
 
 // Configurazione dei servizi dell'applicazione
 builder.Services.AddControllers();
+
+// Configurazione di SignalR
+builder.Services.AddSignalR();
+
+// Configurazione del servizio di monitoraggio allarmi
+builder.Services.AddHostedService<AlarmMonitorService>();
 
 // Configurazione del DbContext per SQLite
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
@@ -74,6 +81,9 @@ using (var scope = app.Services.CreateScope())
     var initializer = scope.ServiceProvider.GetRequiredService<DbInitializerService>();
     await initializer.InitializeAsync();
 }
+
+// Mappa gli endpoint di SignalR
+app.MapHub<AlarmHub>("/alarmHub");
 
 app.MapControllers();
 

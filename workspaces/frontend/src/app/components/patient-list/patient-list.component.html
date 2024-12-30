@@ -1,29 +1,84 @@
-<div class="flex flex-col gap-4 p-4 size-full grow">
-  @if ({ patients: patients$ | async }; as resolved) {
-    <header>
-      <h1 class="text-2xl font-medium">Area pazienti</h1>
-    </header>
+<div class="flex min-h-screen flex-col gap-1 size-full grow">
+  <div class="flex items-center h-12 px-4 border-2 rounded-md border-t-transparent">
+    <span class="text-2xl  font-medium">Ciao {{ currentUser }}</span>
 
-    <main>
-      @if (resolved.patients; as patients) {
-        <p-table [responsive]="true" [value]="patients">
+    <button 
+      class="flex items-center gap-2 ml-auto"
+      (click)="authService.logout()">
+      <span>Esci</span>
+      <i class="pi pi-sign-in"></i>
+    </button>
+  </div>
+
+  <div class="flex flex-col grow gap-2 p-4">
+    @if (patients$ | async; as patients) {
+      <header class="flex items-center">
+        <h1 class="text-2xl font-medium">Area pazienti</h1>
+        <div class="ml-auto flex gap-2">
+          <input 
+            type="text" 
+            placeholder="Cerca per Nome"
+            pInputText 
+            [formControl]="searchGivenname" />
+          <input 
+            type="text" 
+            placeholder="Cerca per Cognome"
+            pInputText 
+            [formControl]="searchFamilyname" />
+
+          <button 
+            class="flex items-center gap-1 bg-blue-500 hover:bg-blue-600 px-2 py-1 text-white rounded-full"
+            (click)="addPatient()">
+            <i class="pi pi-plus"></i>
+            <span>Nuovo</span>
+          </button>   
+        </div>
+      </header>
+  
+      <main class="flex grow">
+        <p-table
+          class="grow"
+          styleClass="grow"
+          [responsive]="true" 
+          [value]="patients"
+          (sortFunction)="onSort($event)"
+          [customSort]="true">
           <ng-template pTemplate="header">
             <tr>
               <th pSortableColumn="id">
-                ID <p-sortIcon field="id" />
+               <div class="flex items-center">
+                <span>ID</span>
+                <p-sortIcon field="id"></p-sortIcon>
+               </div>
+               
               </th>
               <th pSortableColumn="familyName">
-                FamilyName
-                <p-sortIcon field="familyName" />
+                <div class="flex items-center">
+                  Cognome
+                  <p-sortIcon field="familyName"></p-sortIcon>
+                </div>
               </th>
               <th pSortableColumn="givenName">
-                GivenName
-                <p-sortIcon field="givenName" />
+                <div class="flex items-center">
+                  Nome
+                  <p-sortIcon field="givenName"></p-sortIcon>
+                </div>
               </th>
-              <th class="w-fit">BirthDate</th>
-              <th class="w-fit">Sex</th>
+              <th class="w-fit" pSortableColumn="birthDate">
+                <div class="flex items-center">
+                  Data di nascita
+                  <p-sortIcon field="birthDate"></p-sortIcon>
+                </div>
+              </th>
+              <th class="w-fit" pSortableColumn="sex">
+                <div class="flex items-center">
+                  Sesso
+                  <p-sortIcon field="sex"></p-sortIcon>
+                </div>
+              </th>
               <th class="text-nowrap">Numero di parameters</th>
               <th>Allarme</th>
+              <th class="w-1"></th>
             </tr>
           </ng-template>
           <ng-template pTemplate="body" let-patient>
@@ -34,21 +89,36 @@
                 <td>{{ patient.givenName }}</td>
                 <td class="w-fit">{{ patient.birthDate | date : "dd/MM/yyyy" }}</td>
                 <td class="w-fit">{{ patient.sex }}</td>
-                <td class="w-1">{{ patient.parameters.length }}</td>
+                <td class="w-1">{{ patient.parameters?.length }}</td>
                 <td>
-                  @if (patient.parameters.at(-1)?.alarm) {
-                    <i class="pi pi-check-circle text-green-500"></i>
-                  } @else {
+                  @if (patient.parameters?.at(-1)?.alarm) {
                     <i class="pi pi-times-circle text-red-500"></i>
+                  } @else {
+                    <i class="pi pi-check-circle text-green-500"></i>
+                  }
+                </td>
+                <td class="w-1">
+                  @if (patient.id; as id) {
+                    <button 
+                      class="btn-icon"
+                      (click)="$event.stopPropagation(); deletePatient(id)">
+                      <i class="text-red-500 pi pi-trash"></i>
+                    </button>
                   }
                 </td>
               </tr>
             }
           </ng-template>
+
+          <ng-template pTemplate="emptymessage">
+            <div class="absolute size-full flex flex-col grow items-center justify-center">
+              <p>Nessun risultato</p>
+            </div>
+          </ng-template>
         </p-table>
-      } @else {
-        <div class="flex items-center justify-center">caricamento...</div>
-      }
-    </main>
-  }
+      </main>
+    } @else {
+      <div class="flex grow items-center justify-center">caricamento...</div>
+    }
+  </div>
 </div>
