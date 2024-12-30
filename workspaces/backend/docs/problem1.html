@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <title>Sincronizzazione Dati tra Browser - Spiegazione</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif;
+            line-width: 800px;
+            margin: 40px;
+        }
+        .code-example {
+            background-color: #f5f5f5;
+            padding: 15px;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Sincronizzazione Dati tra Browser - Spiegazione Dettagliata</h1>
+
+    <h2>Il Problema</h2>
+    <p>
+        Quando un utente apre la stessa applicazione in più finestre o schede del browser,
+        dobbiamo assicurarci che i dati del paziente siano sincronizzati tra tutte le finestre.
+        Questo significa che se i dati cambiano in una finestra, devono essere aggiornati
+        automaticamente anche nelle altre.
+    </p>
+
+    <h2>La Soluzione</h2>
+    <p>
+        Per risolvere questo problema, possiamo utilizzare diverse tecniche:
+    </p>
+    <ol>
+        <li>SignalR per la comunicazione in tempo reale</li>
+        <li>localStorage per la comunicazione tra schede</li>
+        <li>Polling periodico al server</li>
+    </ol>
+
+    <h2>Implementazione con SignalR</h2>
+    <p>
+        SignalR è la soluzione più elegante per questo problema. Ecco come funziona:
+    </p>
+    <ul>
+        <li>Il server mantiene una connessione in tempo reale con ogni finestra del browser</li>
+        <li>Quando i dati cambiano, il server notifica tutte le finestre connesse</li>
+        <li>Ogni finestra aggiorna automaticamente la sua visualizzazione</li>
+    </ul>
+
+    <h3>Codice di Esempio</h3>
+    <div class="code-example">
+        <pre>
+// Lato Server (C#)
+public class PatientHub : Hub
+{
+    public async Task UpdatePatientData(int patientId, PatientData data)
+    {
+        // Salva i dati nel database
+        await _patientService.UpdatePatientData(patientId, data);
+        
+        // Notifica tutti i client connessi eccetto il mittente
+        await Clients.Others.SendAsync("PatientDataUpdated", patientId, data);
+    }
+}
+
+// Lato Client (JavaScript)
+const connection = new signalR.HubConnectionBuilder()
+    .withUrl("/patientHub")
+    .build();
+
+connection.on("PatientDataUpdated", (patientId, data) => {
+    if (patientId === currentPatientId) {
+        updatePatientDialog(data);
+    }
+});
+        </pre>
+    </div>
+
+    <h2>Come Funziona</h2>
+    <p>
+        1. Quando l'utente apre una nuova finestra:
+        <ul>
+            <li>La finestra si connette al PatientHub</li>
+            <li>Riceve i dati iniziali del paziente</li>
+            <li>Si mette in ascolto per gli aggiornamenti</li>
+        </ul>
+    </p>
+    <p>
+        2. Quando i dati vengono modificati in una finestra:
+        <ul>
+            <li>La modifica viene inviata al server</li>
+            <li>Il server aggiorna il database</li>
+            <li>Il server notifica tutte le altre finestre</li>
+            <li>Le altre finestre aggiornano la loro visualizzazione</li>
+        </ul>
+    </p>
+
+    <h2>Vantaggi di Questa Soluzione</h2>
+    <ul>
+        <li>Aggiornamenti in tempo reale</li>
+        <li>Basso consumo di risorse</li>
+        <li>Scalabile per molte finestre</li>
+        <li>Gestione automatica della riconnessione</li>
+    </ul>
+
+    <h2>Note Importanti</h2>
+    <p>
+        Per implementare questa soluzione, dovrai:
+        <ul>
+            <li>Installare il pacchetto Microsoft.AspNetCore.SignalR</li>
+            <li>Configurare SignalR nel tuo Startup.cs</li>
+            <li>Gestire correttamente le disconnessioni</li>
+            <li>Implementare la gestione degli errori</li>
+        </ul>
+    </p>
+</body>
+</html> 

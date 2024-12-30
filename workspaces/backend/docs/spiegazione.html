@@ -509,5 +509,355 @@ if (existingAdmin == null)
     "omnisharp.enableEditorConfigSupport": true
 }</code>
     </div>
+
+    <div class="section">
+        <h2>19. PatientController - Gestione dei Pazienti</h2>
+        
+        <h3>19.1 Struttura del Controller</h3>
+        <p>Il PatientController implementa le seguenti operazioni CRUD (Create, Read, Update, Delete) e funzionalità di ricerca avanzata:</p>
+        <ul>
+            <li><strong>GET /api/patients</strong>: Ottiene la lista dei pazienti con filtri e ordinamento</li>
+            <li><strong>GET /api/patients/{id}</strong>: Ottiene un paziente specifico</li>
+            <li><strong>POST /api/patients</strong>: Crea un nuovo paziente</li>
+            <li><strong>PUT /api/patients/{id}</strong>: Aggiorna un paziente esistente</li>
+            <li><strong>DELETE /api/patients/{id}</strong>: Elimina un paziente</li>
+        </ul>
+
+        <h3>19.2 Filtri e Ordinamento</h3>
+        <p>Il controller supporta le seguenti funzionalità di filtro e ordinamento:</p>
+        <ul>
+            <li><strong>Filtri</strong>:
+                <ul>
+                    <li>givenName (nome)</li>
+                    <li>familyName (cognome)</li>
+                </ul>
+            </li>
+            <li><strong>Ordinamento</strong>: Possibile su tutti i campi:
+                <ul>
+                    <li>ID</li>
+                    <li>GivenName</li>
+                    <li>FamilyName</li>
+                    <li>BirthDate</li>
+                    <li>Sex</li>
+                </ul>
+            </li>
+        </ul>
+
+        <h3>19.3 Query Parameters</h3>
+        <p>I parametri di query supportati sono:</p>
+        <code>GET /api/patients?givenName=Mario&familyName=Rossi&sortBy=birthDate&sortDirection=desc</code>
+        <ul>
+            <li><strong>givenName</strong>: Filtra per nome (case-insensitive)</li>
+            <li><strong>familyName</strong>: Filtra per cognome (case-insensitive)</li>
+            <li><strong>sortBy</strong>: Campo per l'ordinamento</li>
+            <li><strong>sortDirection</strong>: Direzione dell'ordinamento (asc/desc)</li>
+        </ul>
+
+        <h3>19.4 Validazioni</h3>
+        <p>Il controller implementa le seguenti validazioni:</p>
+        <ul>
+            <li>Verifica che i campi obbligatori non siano vuoti</li>
+            <li>Verifica che la data di nascita sia valida</li>
+            <li>Verifica che il sesso sia un valore valido</li>
+            <li>Verifica che l'ID esista per le operazioni di update e delete</li>
+        </ul>
+
+        <h3>19.5 Risposte HTTP</h3>
+        <p>Il controller restituisce i seguenti codici HTTP:</p>
+        <ul>
+            <li><strong>200 OK</strong>: Operazione completata con successo</li>
+            <li><strong>201 Created</strong>: Nuovo paziente creato</li>
+            <li><strong>400 Bad Request</strong>: Dati non validi</li>
+            <li><strong>404 Not Found</strong>: Paziente non trovato</li>
+            <li><strong>500 Internal Server Error</strong>: Errore del server</li>
+        </ul>
+    </div>
+
+    <div class="section">
+        <h2>21. Sistema di Monitoraggio Allarmi in Tempo Reale</h2>
+        
+        <h3>21.1 Panoramica del Sistema</h3>
+        <p>Il sistema di monitoraggio allarmi è composto da tre componenti principali:</p>
+        <ul>
+            <li><strong>AlarmMonitorService</strong>: Un servizio background che monitora e aggiorna gli allarmi</li>
+            <li><strong>AlarmHub</strong>: Un hub SignalR per la comunicazione real-time</li>
+            <li><strong>Configurazione</strong>: Setup in Program.cs</li>
+        </ul>
+
+        <h3>21.2 AlarmMonitorService</h3>
+        <p>Il servizio di monitoraggio è implementato come un BackgroundService:</p>
+        <code>public class AlarmMonitorService : BackgroundService
+{
+    private readonly ILogger<AlarmMonitorService> _logger;
+    private readonly IServiceScopeFactory _scopeFactory;
+    private readonly IHubContext<AlarmHub> _hubContext;
+    private readonly Random _random;
+
+    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+    {
+        while (!stoppingToken.IsCancellationRequested)
+        {
+            try
+            {
+                await UpdatePatientAlarms();
+                await Task.Delay(TimeSpan.FromSeconds(10), stoppingToken);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Errore durante l'aggiornamento degli allarmi");
+                await Task.Delay(TimeSpan.FromSeconds(5), stoppingToken);
+            }
+        }
+    }
+}</code>
+
+        <h4>Funzionalità Principali:</h4>
+        <ul>
+            <li><strong>Monitoraggio Continuo</strong>: Il servizio gira in background continuamente</li>
+            <li><strong>Intervallo di Aggiornamento</strong>: Controlla e aggiorna gli allarmi ogni 10 secondi</li>
+            <li><strong>Gestione degli Errori</strong>: Include logging e retry in caso di errori</li>
+            <li><strong>Gestione delle Risorse</strong>: Usa IServiceScopeFactory per la gestione corretta delle dipendenze</li>
+        </ul>
+
+        <h3>21.3 Logica di Aggiornamento Allarmi</h3>
+        <code>private async Task UpdatePatientAlarms()
+{
+    using var scope = _scopeFactory.CreateScope();
+    var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
+    var patients = await dbContext.Patients
+        .Include(p => p.Parameters)
+        .ToListAsync();
+
+    foreach (var patient in patients)
+    {
+        var hasAlarm = _random.Next(2) == 1; // Genera true o false casualmente
+
+        foreach (var parameter in patient.Parameters)
+        {
+            if (parameter.Alarm != hasAlarm)
+            {
+                parameter.Alarm = hasAlarm;
+                updated = true;
+            }
+        }
+
+        // Crea un parametro di default se necessario
+        if (!patient.Parameters.Any())
+        {
+            patient.Parameters.Add(new Parameter
+            {
+                PatientID = patient.ID,
+                Name = "DefaultParameter",
+                Value = "0",
+                Alarm = hasAlarm
+            });
+        }
+    }
+}</code>
+
+        <h3>21.4 Comunicazione Real-time con SignalR</h3>
+        <p>L'hub SignalR gestisce la comunicazione in tempo reale:</p>
+        <code>public class AlarmHub : Hub
+{
+    public async Task NotifyPatientsUpdate(IEnumerable<Patient> patients)
+    {
+        await Clients.All.SendAsync("PatientsUpdated", patients);
+    }
+}</code>
+
+        <h3>21.5 Configurazione del Sistema</h3>
+        <p>In Program.cs, configuriamo i servizi necessari:</p>
+        <code>// Configurazione di SignalR
+builder.Services.AddSignalR();
+
+// Configurazione del servizio di monitoraggio
+builder.Services.AddHostedService<AlarmMonitorService>();
+
+// Configurazione CORS per SignalR
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAngular", policy =>
+    {
+        policy.WithOrigins("http://localhost:4200")
+              .AllowAnyMethod()
+              .AllowAnyHeader()
+              .AllowCredentials();
+    });
+});
+
+// Mappa l'hub SignalR
+app.MapHub<AlarmHub>("/alarmHub");</code>
+
+        <h3>21.6 Integrazione con il Frontend</h3>
+        <p>Per integrare il sistema nel frontend Angular:</p>
+        <ol>
+            <li><strong>Installazione del Client SignalR</strong>:
+                <code>npm install @microsoft/signalr</code>
+            </li>
+            <li><strong>Servizio Angular per SignalR</strong>:
+                <code>@Injectable({
+  providedIn: 'root'
+})
+export class SignalRService {
+  private hubConnection: signalR.HubConnection;
+
+  constructor() {
+    this.hubConnection = new signalR.HubConnectionBuilder()
+      .withUrl('https://localhost:7034/alarmHub')
+      .build();
+  }
+
+  public startConnection = () => {
+    this.hubConnection
+      .start()
+      .then(() => console.log('Connessione SignalR stabilita'))
+      .catch(err => console.log('Errore: ' + err));
+  }
+
+  public addPatientsUpdateListener(callback: (patients: any[]) => void) {
+    this.hubConnection.on('PatientsUpdated', (patients) => {
+      callback(patients);
+    });
+  }
+}</code>
+            </li>
+            <li><strong>Utilizzo nel Componente</strong>:
+                <code>export class PatientGridComponent implements OnInit {
+  constructor(private signalRService: SignalRService) {}
+
+  ngOnInit() {
+    this.signalRService.startConnection();
+    this.signalRService.addPatientsUpdateListener((patients) => {
+      this.patients = patients; // Aggiorna la griglia
+    });
+  }
+}</code>
+            </li>
+        </ol>
+
+        <h3>21.7 Vantaggi del Sistema</h3>
+        <ul>
+            <li><strong>Real-time</strong>: Aggiornamenti immediati senza necessità di polling</li>
+            <li><strong>Efficiente</strong>: Usa WebSocket per comunicazione bidirezionale</li>
+            <li><strong>Scalabile</strong>: Supporta multiple istanze e connessioni</li>
+            <li><strong>Robusto</strong>: Gestione degli errori e reconnessione automatica</li>
+            <li><strong>Manutenibile</strong>: Codice organizzato e ben strutturato</li>
+        </ul>
+
+        <div class="note">
+            <p><strong>Nota sulla Sicurezza:</strong> SignalR gestisce automaticamente:</p>
+            <ul>
+                <li>Autenticazione delle connessioni</li>
+                <li>Protezione contro attacchi CSRF</li>
+                <li>Fallback automatico a long polling se WebSocket non è disponibile</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>22. Filtri Personalizzati per Client SignalR</h2>
+        
+        <h3>22.1 Panoramica</h3>
+        <p>Il sistema implementa un meccanismo di filtri personalizzati per ogni client SignalR, permettendo a ciascun client di ricevere solo i dati filtrati secondo i propri criteri.</p>
+
+        <h3>22.2 Componenti del Sistema</h3>
+        <ul>
+            <li><strong>IAlarmHub</strong>: Interfaccia che definisce i metodi di comunicazione</li>
+            <li><strong>AlarmHub</strong>: Implementazione dell'hub con gestione dei filtri</li>
+            <li><strong>AlarmMonitorService</strong>: Servizio che invia gli aggiornamenti filtrati</li>
+            <li><strong>ConcurrentDictionary</strong>: Struttura thread-safe per memorizzare i filtri</li>
+        </ul>
+
+        <h3>22.3 Gestione dei Filtri</h3>
+        <code>// Dictionary thread-safe per i filtri dei client
+private static readonly ConcurrentDictionary<string, PatientQueryParameters> _clientFilters = new();
+
+// Metodo per impostare i filtri
+public async Task SetFilters(PatientQueryParameters filters)
+{
+    var connectionId = Context.ConnectionId;
+    _clientFilters.AddOrUpdate(connectionId, filters, (_, _) => filters);
+}</code>
+
+        <h3>22.4 Applicazione dei Filtri</h3>
+        <p>Quando il servizio invia un aggiornamento:</p>
+        <ol>
+            <li>Recupera la query base dei pazienti</li>
+            <li>Per ogni client connesso:
+                <ul>
+                    <li>Recupera i suoi filtri personali</li>
+                    <li>Applica i filtri alla query</li>
+                    <li>Invia solo i dati filtrati a quel client specifico</li>
+                </ul>
+            </li>
+        </ol>
+
+        <code>public async Task NotifyPatientsUpdate(IQueryable<Patient> patients)
+{
+    foreach (var clientFilter in _clientFilters)
+    {
+        var connectionId = clientFilter.Key;
+        var filters = clientFilter.Value;
+
+        var filteredQuery = patients.AsQueryable();
+
+        // Applica i filtri
+        if (!string.IsNullOrEmpty(filters.GivenName))
+        {
+            filteredQuery = filteredQuery.Where(p => 
+                p.GivenName.ToLower().Contains(filters.GivenName.ToLower()));
+        }
+
+        // Applica l'ordinamento
+        if (!string.IsNullOrEmpty(filters.SortBy))
+        {
+            var sortDirection = filters.SortDirection?.ToLower() == "desc" 
+                ? "descending" : "ascending";
+            var sortField = char.ToUpper(filters.SortBy[0]) + 
+                filters.SortBy.Substring(1).ToLower();
+            filteredQuery = filteredQuery.OrderBy($"{sortField} {sortDirection}");
+        }
+
+        // Invia i dati filtrati
+        await Clients.Client(connectionId).NotifyPatientsUpdate(filteredQuery);
+    }
+}</code>
+
+        <h3>22.5 Vantaggi del Sistema</h3>
+        <ul>
+            <li><strong>Efficienza</strong>: Ogni client riceve solo i dati che gli interessano</li>
+            <li><strong>Personalizzazione</strong>: Ogni client può avere filtri diversi</li>
+            <li><strong>Scalabilità</strong>: I filtri vengono applicati a livello di query</li>
+            <li><strong>Thread-safety</strong>: Utilizzo di ConcurrentDictionary per la gestione concorrente</li>
+            <li><strong>Pulizia</strong>: Rimozione automatica dei filtri alla disconnessione</li>
+        </ul>
+
+        <h3>22.6 Integrazione nel Frontend</h3>
+        <p>Nel frontend Angular, è necessario:</p>
+        <ol>
+            <li>Inviare i filtri quando cambiano:
+                <code>// Nel componente Angular
+async updateFilters(filters: PatientQueryParameters) {
+    await this.hubConnection.invoke('SetFilters', filters);
+}</code>
+            </li>
+            <li>Ascoltare gli aggiornamenti:
+                <code>this.hubConnection.on('PatientsUpdated', (patients) => {
+    this.patients = patients; // I dati sono già filtrati
+});</code>
+            </li>
+        </ol>
+
+        <div class="note">
+            <p><strong>Note Importanti:</strong></p>
+            <ul>
+                <li>I filtri persistono per tutta la durata della connessione</li>
+                <li>Vengono rimossi automaticamente alla disconnessione</li>
+                <li>Possono essere aggiornati in qualsiasi momento</li>
+                <li>La query viene eseguita solo dopo l'applicazione dei filtri</li>
+            </ul>
+        </div>
+    </div>
 </body>
 </html>
