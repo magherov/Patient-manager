@@ -14,9 +14,17 @@
   border: 1px solid #ced4da;
   border-radius: 4px;
   transition: background-color 0.2s, color 0.2s, border-color 0.2s,
-  box-shadow 0.2s;
+    box-shadow 0.2s;
 }
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+button.btn-icon {
+  @apply flex items-center justify-center w-8 h-8 rounded-full shrink-0;
+
+  &:not(:disabled):hover {
+    @apply bg-stone-200;
+  }
+}
