@@ -1,27 +1,57 @@
-# Frontend
+# Patient Manager Frontend
 
-This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 17.3.10.
+This is the frontend application for the Patient Manager system built with Angular.
 
-## Development server
+## Technologies & Libraries
 
-Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The application will automatically reload if you change any of the source files.
+- **Angular 17**: Frontend framework
+- **TailwindCSS**: Utility-first CSS framework for styling
+- **@angular/material**: Material Design components for Angular
+- **SignalR**: Real-time communication with the backend
+- **TypeScript**: Programming language
+- **SCSS**: CSS preprocessor
+- **PostCSS**: Tool for transforming CSS
 
-## Code scaffolding
+## Prerequisites
 
-Run `ng generate component component-name` to generate a new component. You can also use `ng generate directive|pipe|service|class|guard|interface|enum|module`.
+- Node.js (v18 or higher)
+- npm (comes with Node.js)
 
-## Build
+## Setup & Running
 
-Run `ng build` to build the project. The build artifacts will be stored in the `dist/` directory.
+1. Install dependencies:
+```bash
+npm install
+```
 
-## Running unit tests
+2. Start the development server:
+```bash
+npm start
+```
+or
+```bash
+ng serve
+```
 
-Run `ng test` to execute the unit tests via [Karma](https://karma-runner.github.io).
+The application will be available at `http://localhost:4200`
 
-## Running end-to-end tests
+## Building for Production
 
-Run `ng e2e` to execute the end-to-end tests via a platform of your choice. To use this command, you need to first add a package that implements end-to-end testing capabilities.
+To build the application for production:
 
-## Further help
+```bash
+npm run build
+```
 
-To get more help on the Angular CLI use `ng help` or go check out the [Angular CLI Overview and Command Reference](https://angular.io/cli) page.
+The build artifacts will be stored in the `dist/` directory.
+
+## Project Structure
+
+- `src/app/components/`: Contains all Angular components
+- `src/app/services/`: Contains services for API communication
+- `src/app/dialogs/`: Contains dialog components
+- `src/app/guard/`: Contains route guards for authentication
+- `src/app/interceptors/`: Contains HTTP interceptors
+- `src/app/utils/`: Contains utility functions
+- `src/assets/`: Contains static assets like images and icons
+- `src/environments/`: Contains environment configuration files
