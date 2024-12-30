@@ -1,7 +1,6 @@
 import { Component } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
-import { MessageService } from 'primeng/api';
-import { DialogService } from 'primeng/dynamicdialog';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ToastModule } from 'primeng/toast';
 
 @Component({
@@ -9,8 +8,7 @@ import { ToastModule } from 'primeng/toast';
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss',
   standalone: true,
-  imports: [RouterOutlet, ToastModule],
-  providers: [DialogService, MessageService]
+  imports: [RouterOutlet, ToastModule, ConfirmDialogModule],
 })
 export class AppComponent {
   title = 'frontend';
