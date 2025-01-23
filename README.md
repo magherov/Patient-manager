@@ -78,6 +78,10 @@ ng serve
 
 Il frontend sarà disponibile su: http://localhost:4200
 
+Vengono creati due User di default:
+- admin = Username: Admin e password: admin
+- user + Username: user e password: admin
+
 ## Struttura del Progetto
 
 ### Backend (`workspaces/backend/PatientManagerApi`)
